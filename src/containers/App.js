@@ -5,7 +5,9 @@ import Checkout from "./Checkout/Checkout";
 import Orders from "./Orders/Orders";
 import Auth from "../containers/Auth/Auth";
 import Logout from "../containers/Auth/Logout/Logout";
-import { Route, Switch } from "react-router-dom";
+import * as actions from "../store/actions/index";
+import { Route, Switch, Redirect } from "react-router-dom";
+import { connect } from "react-redux";
 
 class App extends Component {
   // state = {
@@ -18,19 +20,38 @@ class App extends Component {
   //   }, 5000);
   // }
 
+  componentDidMount() {
+    this.props.onTryAutoSignup();
+  }
+
   render() {
+    let router = (
+      <Switch>
+        <Route path="/auth" component={Auth} />
+        <Route path="/" exact component={BurgerBuilder} />
+        <Redirect to="/" />
+      </Switch>
+    );
+
+    if (this.props.isAuthenticated) {
+      router = (
+        <Switch>
+          <Route path="/checkout" component={Checkout} />
+          <Route path="/orders" component={Orders} />
+          <Route path="/auth" component={Auth} />
+          <Route path="/logout" component={Logout} />
+          <Route path="/" exact component={BurgerBuilder} />
+          <Redirect to="/" />
+        </Switch>
+      );
+    }
+
     return (
       <div>
         {/* <Layout>{this.state.show ? <BurgerBuilder /> : null}</Layout>
          */}
         <Layout>
-          <Switch>
-            <Route path="/checkout" component={Checkout} />
-            <Route path="/orders" component={Orders} />
-            <Route path="/auth" component={Auth} />
-            <Route path="/logout" component={Logout} />
-            <Route path="/" exact component={BurgerBuilder} />
-          </Switch>
+          {router}
           {/* <Checkout /> */}
         </Layout>
       </div>
@@ -38,4 +59,16 @@ class App extends Component {
   }
 }
 
-export default App;
+const mapStateToProps = (state) => {
+  return {
+    isAuthenticated: state.auth.token !== null,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onTryAutoSignup: () => dispatch(actions.authCheckState()),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);
